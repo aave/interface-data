@@ -12,6 +12,7 @@ import { Warning } from 'src/components/primitives/Warning';
 import { MarketWarning } from 'src/components/transactions/Warnings/MarketWarning';
 import { AssetCapsProvider } from 'src/hooks/useAssetCaps';
 import { fetchIconSymbolAndName } from 'src/ui-config/reservePatches';
+import { GENERAL } from 'src/utils/mixPanelEvents';
 
 import { CapType } from '../../../../components/caps/helper';
 import { AvailableTooltip } from '../../../../components/infoTooltips/AvailableTooltip';
@@ -44,6 +45,10 @@ const head = [
   {
     title: (
       <AvailableTooltip
+        event={{
+          eventName: GENERAL.TOOL_TIP,
+          eventParams: { tooltip: 'Available to borrow' },
+        }}
         capType={CapType.borrowCap}
         text={<Trans>Available</Trans>}
         key="availableBorrows"
@@ -56,6 +61,10 @@ const head = [
   {
     title: (
       <VariableAPYTooltip
+        event={{
+          eventName: GENERAL.TOOL_TIP,
+          eventParams: { tooltip: 'Variable Borrow APY' },
+        }}
         text={<Trans>APY, variable</Trans>}
         key="variableBorrowAPY"
         variant="subheader2"
@@ -66,6 +75,10 @@ const head = [
   {
     title: (
       <StableAPYTooltip
+        event={{
+          eventName: GENERAL.TOOL_TIP,
+          eventParams: { tooltip: 'Stable Borrow APY' },
+        }}
         text={<Trans>APY, stable</Trans>}
         key="stableBorrowAPY"
         variant="subheader2"
@@ -76,7 +89,7 @@ const head = [
 ];
 
 export const BorrowAssetsList = () => {
-  const { currentNetworkConfig } = useProtocolDataContext();
+  const { currentNetworkConfig, currentMarketData } = useProtocolDataContext();
   const { user, reserves, marketReferencePriceInUsd, loading } = useAppDataContext();
   const theme = useTheme();
   const downToXSM = useMediaQuery(theme.breakpoints.down('xsm'));
@@ -199,6 +212,9 @@ export const BorrowAssetsList = () => {
 
           {borrowDisabled && currentNetworkConfig.name === 'Fantom' && (
             <MarketWarning marketName="Fantom" />
+          )}
+          {borrowDisabled && currentMarketData.marketTitle === 'Ethereum AMM' && (
+            <MarketWarning marketName="Ethereum AMM" />
           )}
 
           {+collateralUsagePercent >= 0.98 && (

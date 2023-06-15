@@ -11,7 +11,10 @@ import { MarketWarning } from 'src/components/transactions/Warnings/MarketWarnin
 import { useAppDataContext } from 'src/hooks/app-data-provider/useAppDataProvider';
 import { useProtocolDataContext } from 'src/hooks/useProtocolDataContext';
 import MarketAssetsList from 'src/modules/markets/MarketAssetsList';
+import { useRootStore } from 'src/store/root';
 import { fetchIconSymbolAndName } from 'src/ui-config/reservePatches';
+
+import { MARKETS } from '../../utils/mixPanelEvents';
 
 export const MarketAssetsListContainer = () => {
   const { reserves, loading } = useAppDataContext();
@@ -19,6 +22,7 @@ export const MarketAssetsListContainer = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { breakpoints } = useTheme();
   const sm = useMediaQuery(breakpoints.down('sm'));
+  const trackEvent = useRootStore((store) => store.trackEvent);
 
   const filteredData = reserves
     .filter((res) => res.isActive)
@@ -40,11 +44,10 @@ export const MarketAssetsListContainer = () => {
           })
         : {}),
     }));
-
   const marketFrozen = !reserves.some((reserve) => !reserve.isFrozen);
   const showFrozenMarketWarning =
-    marketFrozen && ['Harmony', 'Fantom'].includes(currentNetworkConfig.name);
-  const unfrozenReserves = filteredData.filter((r) => !r.isFrozen);
+    marketFrozen && ['Harmony', 'Fantom', 'Ethereum AMM'].includes(currentMarketData.marketTitle);
+  const unfrozenReserves = filteredData.filter((r) => !r.isFrozen && !r.isPaused);
   const frozenOrPausedReserves = filteredData.filter((r) => r.isFrozen || r.isPaused);
 
   return (
@@ -63,7 +66,7 @@ export const MarketAssetsListContainer = () => {
     >
       {showFrozenMarketWarning && (
         <Box mx={6}>
-          <MarketWarning marketName={currentNetworkConfig.name} forum />
+          <MarketWarning marketName={currentMarketData.marketTitle} forum />
         </Box>
       )}
 
@@ -81,7 +84,15 @@ export const MarketAssetsListContainer = () => {
               These assets are temporarily frozen or paused by Aave community decisions, meaning
               that further supply / borrow, or rate swap of these assets are unavailable.
               Withdrawals and debt repayments are allowed. Follow the{' '}
-              <Link href="https://governance.aave.com" underline="always">
+              <Link
+                onClick={() => {
+                  trackEvent(MARKETS.VIEW_FROZEN_GOV_POST_MARKET, {
+                    frozenMarket: currentNetworkConfig.name,
+                  });
+                }}
+                href="https://governance.aave.com"
+                underline="always"
+              >
                 Aave governance forum
               </Link>{' '}
               for further updates.
